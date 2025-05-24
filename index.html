@@ -70,14 +70,27 @@
       const toggleBtn = document.getElementById('toggleInput')
       let detailsBlocks = []
 
-      const STORAGE_KEY = 'dictionaryText'
+      const STORAGE_KEY_TEXT = 'dictionaryText'
+      const STORAGE_KEY_VISIBILITY = 'textareaVisible'
 
-      // Загружаем текст из localStorage при запуске
+      // Загружаем текст и видимость при запуске
       window.addEventListener('DOMContentLoaded', () => {
-        const savedText = localStorage.getItem(STORAGE_KEY)
+        const savedText = localStorage.getItem(STORAGE_KEY_TEXT)
+        const visibility = localStorage.getItem(STORAGE_KEY_VISIBILITY)
+
         if (savedText) {
           inputEl.value = savedText
           renderDictionary(savedText)
+        }
+
+        if (visibility === 'hidden') {
+          inputEl.style.display = 'none'
+          showBtn.style.display = 'none'
+          toggleBtn.textContent = 'Показать ввод'
+        } else {
+          inputEl.style.display = 'block'
+          showBtn.style.display = 'inline-block'
+          toggleBtn.textContent = 'Скрыть ввод'
         }
       })
 
@@ -120,7 +133,7 @@
 
       showBtn.addEventListener('click', () => {
         const text = inputEl.value
-        localStorage.setItem(STORAGE_KEY, text)
+        localStorage.setItem(STORAGE_KEY_TEXT, text)
         renderDictionary(text)
       })
 
@@ -129,6 +142,10 @@
         inputEl.style.display = isHidden ? 'block' : 'none'
         showBtn.style.display = isHidden ? 'inline-block' : 'none'
         toggleBtn.textContent = isHidden ? 'Скрыть ввод' : 'Показать ввод'
+        localStorage.setItem(
+          STORAGE_KEY_VISIBILITY,
+          isHidden ? 'visible' : 'hidden'
+        )
       })
 
       document.addEventListener('keydown', (e) => {
