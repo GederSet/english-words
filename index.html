@@ -70,6 +70,17 @@
       const toggleBtn = document.getElementById('toggleInput')
       let detailsBlocks = []
 
+      const STORAGE_KEY = 'dictionaryText'
+
+      // Загружаем текст из localStorage при запуске
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedText = localStorage.getItem(STORAGE_KEY)
+        if (savedText) {
+          inputEl.value = savedText
+          renderDictionary(savedText)
+        }
+      })
+
       function renderDictionary(text) {
         outputDiv.innerHTML = ''
         detailsBlocks = []
@@ -108,7 +119,9 @@
       }
 
       showBtn.addEventListener('click', () => {
-        renderDictionary(inputEl.value)
+        const text = inputEl.value
+        localStorage.setItem(STORAGE_KEY, text)
+        renderDictionary(text)
       })
 
       toggleBtn.addEventListener('click', () => {
