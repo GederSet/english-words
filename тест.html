@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Словарь слов</title>
+    <style>
+      #output {
+        display: flex;
+        flex-direction: column;
+        font-family: sans-serif;
+        margin-top: 20px;
+      }
+
+      .entry {
+        display: flex;
+        padding: 10px;
+      }
+
+      .details {
+        margin-left: 6px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .details.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      textarea {
+        width: 98.5%;
+        height: 150px;
+        font-family: sans-serif;
+        font-size: 16px;
+        margin-top: 10px;
+        resize: none;
+        padding: 10px;
+      }
+
+      button {
+        margin-top: 10px;
+        margin-right: 10px;
+        padding: 6px 12px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+        border: 1px solid grey;
+        outline: none;
+      }
+
+      #controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="input" placeholder="Вставьте слова сюда..."></textarea>
+    <div id="controls">
+      <button id="show">Показать</button>
+      <button id="toggleInput">Скрыть ввод</button>
+    </div>
+    <div id="output"></div>
+
+    <script>
+      const inputEl = document.getElementById('input')
+      const outputDiv = document.getElementById('output')
+      const showBtn = document.getElementById('show')
+      const toggleBtn = document.getElementById('toggleInput')
+      let detailsBlocks = []
+
+      function renderDictionary(text) {
+        outputDiv.innerHTML = ''
+        detailsBlocks = []
+
+        const lines = text.trim().split('\n')
+
+        lines.forEach((line) => {
+          const parts = line.split(' - ').map((p) => p.trim())
+
+          if (parts.length >= 2) {
+            const entry = document.createElement('div')
+            entry.className = 'entry'
+
+            const wordDiv = document.createElement('div')
+            wordDiv.className = 'word'
+            wordDiv.textContent = parts[0]
+
+            const detailsDiv = document.createElement('div')
+            detailsDiv.className = 'details'
+
+            if (parts.length === 2) {
+              const [, translation] = parts
+              detailsDiv.textContent = `- ${translation}`
+            } else if (parts.length >= 4) {
+              const [, translation, example, exampleTranslation] = parts
+              detailsDiv.textContent = `- ${translation} - ${example} - ${exampleTranslation}`
+            }
+
+            entry.appendChild(wordDiv)
+            entry.appendChild(detailsDiv)
+            outputDiv.appendChild(entry)
+
+            detailsBlocks.push(detailsDiv)
+          }
+        })
+      }
+
+      showBtn.addEventListener('click', () => {
+        renderDictionary(inputEl.value)
+      })
+
+      toggleBtn.addEventListener('click', () => {
+        const isHidden = inputEl.style.display === 'none'
+        inputEl.style.display = isHidden ? 'block' : 'none'
+        showBtn.style.display = isHidden ? 'inline-block' : 'none'
+        toggleBtn.textContent = isHidden ? 'Скрыть ввод' : 'Показать ввод'
+      })
+
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault()
+          detailsBlocks.forEach((block) => {
+            block.classList.toggle('visible')
+          })
+        }
+      })
+    </script>
+  </body>
+</html>
