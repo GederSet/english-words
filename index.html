@@ -94,13 +94,20 @@
         }
       })
 
-      function renderDictionary(text) {
+      function renderDictionary(text, preserveVisibility = false) {
+        let visibilityStates = []
+        if (preserveVisibility) {
+          visibilityStates = detailsBlocks.map((block) =>
+            block.classList.contains('visible')
+          )
+        }
+
         outputDiv.innerHTML = ''
         detailsBlocks = []
 
         const lines = text.trim().split('\n')
 
-        lines.forEach((line) => {
+        lines.forEach((line, index) => {
           const parts = line.split(' - ').map((p) => p.trim())
 
           if (parts.length >= 2) {
@@ -120,6 +127,10 @@
             } else if (parts.length >= 4) {
               const [, translation, example, exampleTranslation] = parts
               detailsDiv.textContent = `- ${translation} - ${example} - ${exampleTranslation}`
+            }
+
+            if (preserveVisibility && visibilityStates[index]) {
+              detailsDiv.classList.add('visible')
             }
 
             entry.appendChild(wordDiv)
@@ -154,6 +165,24 @@
           detailsBlocks.forEach((block) => {
             block.classList.toggle('visible')
           })
+        }
+
+        if (e.key.toLowerCase() === 'c' || e.key === 'с') {
+          const lines = inputEl.value.trim().split('\n')
+          const swappedLines = lines.map((line) => {
+            const parts = line.split(' - ').map((p) => p.trim())
+            if (parts.length === 2) {
+              return `${parts[1]} - ${parts[0]}`
+            } else if (parts.length === 4) {
+              return `${parts[1]} - ${parts[0]} - ${parts[3]} - ${parts[2]}`
+            }
+            return line
+          })
+
+          const newText = swappedLines.join('\n')
+          inputEl.value = newText
+          localStorage.setItem(STORAGE_KEY_TEXT, newText)
+          renderDictionary(newText, true)
         }
       })
     </script>
