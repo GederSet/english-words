@@ -13,7 +13,8 @@
 
       .entry {
         display: flex;
-        padding: 10px;
+        padding: 5px;
+        margin-bottom: 5px;
       }
 
       .details {
@@ -53,6 +54,10 @@
         flex-wrap: wrap;
         align-items: center;
       }
+
+      .highlighted {
+        background-color: #f9f90f;
+      }
     </style>
   </head>
   <body>
@@ -60,6 +65,7 @@
     <div id="controls">
       <button id="show">Показать</button>
       <button id="toggleInput">Скрыть ввод</button>
+      <button id="clearHighlights">Сбросить выделения</button>
     </div>
     <div id="output"></div>
 
@@ -68,15 +74,24 @@
       const outputDiv = document.getElementById('output')
       const showBtn = document.getElementById('show')
       const toggleBtn = document.getElementById('toggleInput')
+      const clearBtn = document.getElementById('clearHighlights')
+
       let detailsBlocks = []
 
       const STORAGE_KEY_TEXT = 'dictionaryText'
       const STORAGE_KEY_VISIBILITY = 'textareaVisible'
+      const STORAGE_KEY_HIGHLIGHTS = 'highlightedLines'
 
-      // Загружаем текст и видимость при запуске
+      let highlightedIndices = new Set()
+
       window.addEventListener('DOMContentLoaded', () => {
         const savedText = localStorage.getItem(STORAGE_KEY_TEXT)
         const visibility = localStorage.getItem(STORAGE_KEY_VISIBILITY)
+        const savedHighlights = JSON.parse(
+          localStorage.getItem(STORAGE_KEY_HIGHLIGHTS) || '[]'
+        )
+
+        highlightedIndices = new Set(savedHighlights)
 
         if (savedText) {
           inputEl.value = savedText
@@ -86,10 +101,12 @@
         if (visibility === 'hidden') {
           inputEl.style.display = 'none'
           showBtn.style.display = 'none'
+          clearBtn.style.display = 'none'
           toggleBtn.textContent = 'Показать ввод'
         } else {
           inputEl.style.display = 'block'
           showBtn.style.display = 'inline-block'
+          clearBtn.style.display = 'inline-block'
           toggleBtn.textContent = 'Скрыть ввод'
         }
       })
@@ -113,6 +130,9 @@
           if (parts.length >= 2) {
             const entry = document.createElement('div')
             entry.className = 'entry'
+            if (highlightedIndices.has(index)) {
+              entry.classList.add('highlighted')
+            }
 
             const wordDiv = document.createElement('div')
             wordDiv.className = 'word'
@@ -150,13 +170,26 @@
 
       toggleBtn.addEventListener('click', () => {
         const isHidden = inputEl.style.display === 'none'
-        inputEl.style.display = isHidden ? 'block' : 'none'
+        const newDisplay = isHidden ? 'block' : 'none'
+
+        inputEl.style.display = newDisplay
         showBtn.style.display = isHidden ? 'inline-block' : 'none'
+        clearBtn.style.display = isHidden ? 'inline-block' : 'none'
         toggleBtn.textContent = isHidden ? 'Скрыть ввод' : 'Показать ввод'
+
         localStorage.setItem(
           STORAGE_KEY_VISIBILITY,
           isHidden ? 'visible' : 'hidden'
         )
+      })
+
+      clearBtn.addEventListener('click', () => {
+        highlightedIndices.clear()
+        localStorage.removeItem(STORAGE_KEY_HIGHLIGHTS)
+
+        document
+          .querySelectorAll('.entry')
+          .forEach((entry) => entry.classList.remove('highlighted'))
       })
 
       document.addEventListener('keydown', (e) => {
@@ -168,6 +201,43 @@
         }
 
         if (e.key.toLowerCase() === 'ч' || e.key === 'x') {
+          if (e.ctrlKey) {
+            e.preventDefault()
+
+            const selection = window.getSelection()
+            const selectedText = selection.toString().trim()
+
+            if (selectedText && selection.anchorNode) {
+              let node = selection.anchorNode
+              while (node && !node.classList?.contains('entry')) {
+                node = node.parentNode
+              }
+
+              if (node && node.classList?.contains('entry')) {
+                const entries = Array.from(document.querySelectorAll('.entry'))
+                const index = entries.indexOf(node)
+
+                if (index !== -1) {
+                  if (highlightedIndices.has(index)) {
+                    highlightedIndices.delete(index)
+                    node.classList.remove('highlighted')
+                  } else {
+                    highlightedIndices.add(index)
+                    node.classList.add('highlighted')
+                  }
+
+                  localStorage.setItem(
+                    STORAGE_KEY_HIGHLIGHTS,
+                    JSON.stringify(Array.from(highlightedIndices))
+                  )
+                }
+              }
+            }
+
+            return
+          }
+
+          // Перестановка колонок
           const lines = inputEl.value.trim().split('\n')
           const swappedLines = lines.map((line) => {
             const parts = line.split(' - ').map((p) => p.trim())
